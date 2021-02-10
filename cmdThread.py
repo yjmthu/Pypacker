@@ -24,33 +24,35 @@ class QmyTread(QThread):
         self.FileMode = ''
     
     def run(self):
-        self.Remove_Dirs()
+        try:
+            self.Remove_Dirs()
+            #os.system(self.command)
+            subprocess.run(self.command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE)
+            
+            if self.Mode == 'build':
+                if self.MoveTo != '':
+                    if os.path.exists(self.MoveTo):
+                        pass
+                    else:
+                        os.makedirs(self.MoveTo)
+                    exeFile = os.listdir(self.junkDirs[0])
+                    for i in exeFile:
+                        if self.FileMode == 'File':
+                            name = self.rename(self.MoveTo, i)
+                            if name != i:
+                                os.rename(self.junkDirs[0]+'\\'+i, self.junkDirs[0]+'/'+name)
+                        elif self.FileMode == 'Folder':
+                            if os.path.exists(self.MoveTo+'\\'+self.MainName):
+                                shutil.rmtree(self.MoveTo+'\\'+self.MainName)
+                            name = i
+                        From = self.junkDirs[0] + '\\' + name
+                        shutil.move(From, self.MoveTo)
+                    self.Remove_Dirs()
 
-        #os.system(self.command)
-        subprocess.run(self.command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                       stderr=subprocess.PIPE)
-        
-        if self.Mode == 'build':
-            if self.MoveTo != '':
-                if os.path.exists(self.MoveTo):
-                    pass
-                else:
-                    os.makedirs(self.MoveTo)
-                exeFile = os.listdir(self.junkDirs[0])
-                for i in exeFile:
-                    if self.FileMode == 'File':
-                        name = self.rename(self.MoveTo, i)
-                        if name != i:
-                            os.rename(self.junkDirs[0]+'\\'+i, self.junkDirs[0]+'/'+name)
-                    elif self.FileMode == 'Folder':
-                        if os.path.exists(self.MoveTo+'\\'+self.MainName):
-                            shutil.rmtree(self.MoveTo+'\\'+self.MainName)
-                        name = i
-                    From = self.junkDirs[0] + '\\' + name
-                    shutil.move(From, self.MoveTo)
-                self.Remove_Dirs()
-
-        self.finish.emit(True)
+            self.finish.emit(True)
+        except:
+            self.finish.emit(False)
     
     def rename(self, Path, Name, i=0):
         if i == 0:

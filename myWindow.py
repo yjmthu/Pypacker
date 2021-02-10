@@ -24,6 +24,7 @@ class Qmywindow(QMainWindow):
         self.icoName = ''
         self.specName = ''
         self.MoveTo = ''
+        self.PassWord = 'Pypacker'
         self.SettingName = 'Settings.json'
         self.ColorW = [240, 240, 240, 255]
         self.ColorT = [0, 0, 0, 255]
@@ -73,6 +74,11 @@ class Qmywindow(QMainWindow):
                     self.pyName = ''
                     self.ui.linePath.clear()
                 self.ui.pBtnOpen.setEnabled(True)
+        
+        if self.pyPath != "":
+            if os.path.exists(self.pyPath):
+                self.ui.actCleanPyo.setEnabled(True)
+                self.ui.actCleanSpec.setEnabled(True)
 
         self.Thread = QmyTread()
         self.Thread.finish.connect(self.do_Finish)
@@ -159,8 +165,11 @@ class Qmywindow(QMainWindow):
                     content += ' -i ' + self.icoName
                 else:
                     content += ' -i ' + self.icoPath + '\\' + self.icoName
+            if self.ui.actSecret.isChecked() and self.PassWord != '':
+                Cmd += ' --key ' + self.PassWord
+                content += ' --key ' + self.PassWord
             Cmd += ' ' + self.pyName
-            content += ' ' + self.pyName
+            content += ' --clean ' + self.pyName
 
             self.BarLable.setText('正在执行命令……')
             if self.ui.chkBat.isChecked():
@@ -186,24 +195,30 @@ class Qmywindow(QMainWindow):
             msg_box = QMessageBox.warning(self, "警告", "你需要选择一个Python脚本！")
     
     @pyqtSlot(bool)
-    def do_Finish(self):
-        if self.Thread.Mode == 'build':
-            if self.ui.actExit.isChecked():
-                if self.ui.actExitSave.isChecked():
-                    self.DumpSettings()
-                self.close()
-                sys.exit()
-            else:
-                self.BarLable.setText('编译完成！')
-                QMessageBox.information(self, "提示", '编译完成！')
-                self.ui.pBtnCancel.setEnabled(True)
-                self.ui.pBtnOK.setEnabled(True)
-        elif self.Thread.Mode == 'install':
-            self.BarLable.setText("安装完成！")
-            QMessageBox.information(self, "提示", '安装完成！')
-        elif self.Thread.Mode == 'uninstall':
-            self.BarLable.setText("卸载完成")
-            QMessageBox.information(self, "提示", '卸载完成！')
+    def do_Finish(self, sucess):
+        if sucess:
+            if self.Thread.Mode == 'build':
+                if self.ui.actExit.isChecked():
+                    if self.ui.actExitSave.isChecked():
+                        self.DumpSettings()
+                    self.close()
+                else:
+                    self.BarLable.setText('编译完成！')
+                    if self.ui.actFinishDianlog.isChecked():
+                        QMessageBox.information(self, "提示", '编译完成！')
+                    self.ui.pBtnCancel.setEnabled(True)
+                    self.ui.pBtnOK.setEnabled(True)
+            elif self.Thread.Mode == 'install':
+                self.BarLable.setText("安装完成！")
+                QMessageBox.information(self, "提示", '安装完成！')
+            elif self.Thread.Mode == 'uninstall':
+                self.BarLable.setText("卸载完成")
+                QMessageBox.information(self, "提示", '卸载完成！')
+        else:
+            self.ui.pBtnCancel.setEnabled(True)
+            self.ui.pBtnOK.setEnabled(True)
+            self.BarLable.setText("编译出错了！！！")
+            QMessageBox.critical(self, "出错", "出现严重错误，请检查相关文件以及编译设置。")
     
     @pyqtSlot(bool)
     def on_actInstaller_triggered(self):
@@ -264,14 +279,34 @@ class Qmywindow(QMainWindow):
     @pyqtSlot(bool)
     def on_actCleanSpec_triggered(self):
         '''清除spec文件'''
-        files = os.listdir(self.pyPath)
         n = 0
-        for i in files:
-            if ".spec" in i.lower():
-                if i[-5:].lower() == '.spec':
-                    os.remove(i)
-                    n += 1
+        if self.pyPath != '':
+            files = os.listdir(self.pyPath)
+            for i in files:
+                Path = self.pyPath + '\\' + i
+                if os.path.isfile(Path):
+                    if os.path.splitext(Path)[1].lower() == '.spec':
+                        os.remove(i)
+                        n += 1
+        else:
+            pass
         QMessageBox.information(self, "提示", "共找到"+str(n)+"个spec文件，并且全部清除完毕！")
+    
+    @pyqtSlot(bool)
+    def on_actCleanPyo_triggered(self):
+        '''清除pyo文件。'''
+        n = 0
+        if self.pyPath != '':
+            files = os.listdir(self.pyPath)
+            for i in files:
+                Path = self.pyPath + '\\' + i
+                if os.path.isfile(Path):
+                    if os.path.splitext(Path)[1].lower() == '.pyo':
+                        os.remove(i)
+                        n += 1
+        else:
+            pass
+        QMessageBox.information(self, "提示", "共找到"+str(n)+"个pyo文件，并且全部清除完毕！")
 
     @pyqtSlot(bool)
     def on_actModules_triggered(self):
@@ -404,6 +439,36 @@ class Qmywindow(QMainWindow):
         self.DumpSettings('Temporary.json')
         restart('B')
 
+    @pyqtSlot(bool)
+    def on_actOutput_triggered(self):
+        if self.MoveTo != '' and self.ui.actPerfect.isChecked():
+            if os.path.exists(self.MoveTo):
+                pass
+            else:
+                os.makedirs(self.MoveTo)
+            os.system('start explorer {}'.format(self.MoveTo))
+        elif self.pyPath != '':
+            if os.path.exists(self.pyPath+'\\dist'):
+                os.system('start explorer {}'.format(self.pyPath))
+            else:
+                QMessageBox.information(self, '提示', '还没有生成输出文件哦~')
+        else:
+            QMessageBox.information(self, '提示', '没有路径可以打开。')
+    
+    @pyqtSlot(bool)
+    def on_actPassword_triggered(self):
+        dlgTitle = "输入文字对话框"
+        txtLable = "请输入密码(加密需要提前安装模块tinyaes，否则会导致程序bug)"
+        echoMode = QLineEdit.Normal
+        text, OK = QInputDialog.getText(self, dlgTitle, txtLable, echoMode, self.PassWord)
+        if OK:
+            if text != '':
+                self.PassWord = text
+    
+    @pyqtSlot(bool)
+    def on_actOpenInstallPath_triggered(self):
+        os.system('start explorer {}'.format(self.stayPath))
+
     def MakeOutAction(self, Mode=''):
         '''检查Debug模式。'''
         if Mode == '':
@@ -459,9 +524,12 @@ class Qmywindow(QMainWindow):
                 self.ui.actExit.setChecked(dic['Exit'])
                 self.ui.actExitSave.setChecked(dic['ExitSave'])
                 self.ui.actExitDialog.setChecked(dic['ExitDialog'])
+                self.ui.actFinishDianlog.setChecked(dic['FinishDianlog'])
                 self.MoveTo = dic['MoveTo']
                 self.ColorW = dic['ColorW']
                 self.ColorT = dic['ColorT']
+                self.ui.actSecret.setChecked(dic['Secret'])
+                self.PassWord = dic['PassWord']
                 self.SetColor(self.ColorW, 'W')
                 self.SetColor(self.ColorT, 'T')
                 if self.ui.chkSetIcon.isChecked():
@@ -483,6 +551,9 @@ class Qmywindow(QMainWindow):
                         self.ui.LabSpecName.setText('xxxx.spec )')
                     else:
                         self.ui.LabSpecName.setText(self.pyName[:-3]+'.spec )')
+                if self.pyPath != '':
+                    self.ui.actCleanSpec.setEnabled(True)
+                    self.ui.actCleanPyo.setEnabled(True)
                 if dic['icoName'] != '':
                     self.ui.Labico.setText(dic['icoPath']+'/'+dic['icoName'])
                 self.MakeOutAction(dic['DebugMode'])
@@ -520,10 +591,13 @@ class Qmywindow(QMainWindow):
         dic['MoveTo'] = self.MoveTo
         dic['ColorW'] = self.ColorW
         dic['ColorT'] = self.ColorT
+        dic['PassWord'] = self.PassWord
+        dic['Secret'] = self.ui.actSecret.isChecked()
         dic['DebugMode'] = self.MakeOutAction()
         dic['Exit'] = self.ui.actExit.isChecked()
         dic['ExitSave'] = self.ui.actExitSave.isChecked()
         dic['ExitDialog'] = self.ui.actExitDialog.isChecked()
+        dic['FinishDianlog'] = self.ui.actFinishDianlog.isChecked()
         json.dump(dic, File)
         File.close()
     

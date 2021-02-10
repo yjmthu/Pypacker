@@ -10,12 +10,12 @@ def is_admin():
 def chkReg()->list:
     Return = [False, False]
     try:
-        winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r'Directory\Background\shell\pyinstaller')
+        winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r'Directory\Background\shell\Pypacker')
         Return[0] = True
     except FileNotFoundError:
         Return[0] = False
     try:
-        winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r'*\shell\pyinstaller')
+        winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r'SystemFileAssociations\.py\shell\Pypacker')
         Return[1] = True
     except FileNotFoundError:
         Return[1] = False
@@ -25,9 +25,9 @@ def chkReg()->list:
 def addFolder()->None:
     Path = os.path.realpath(sys.argv[0])
     key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r'Directory\Background\shell')
-    NewKey = winreg.CreateKey(key, "pyinstaller")
+    NewKey = winreg.CreateKey(key, "Pypacker")
     winreg.CloseKey(key)
-    winreg.SetValue(NewKey, '', winreg.REG_SZ, "通过 Py编译者 打开")
+    winreg.SetValue(NewKey, '', winreg.REG_SZ, "通过 Pypacker 打开")
     winreg.SetValueEx(NewKey, 'Icon', 0, winreg.REG_SZ, Path)
     newkey = winreg.CreateKey(NewKey, "command")
     winreg.CloseKey(NewKey)
@@ -35,9 +35,9 @@ def addFolder()->None:
     winreg.CloseKey(newkey)
 
     key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r'Directory\shell')
-    NewKey = winreg.CreateKey(key, "pyinstaller")
+    NewKey = winreg.CreateKey(key, "Pypacker")
     winreg.CloseKey(key)
-    winreg.SetValue(NewKey, '', winreg.REG_SZ, "通过 Py编译者 打开")
+    winreg.SetValue(NewKey, '', winreg.REG_SZ, "通过 Pypacker 打开")
     winreg.SetValueEx(NewKey, 'Icon', 0, winreg.REG_SZ, Path)
     newkey = winreg.CreateKey(NewKey, "command")
     winreg.CloseKey(NewKey)
@@ -46,28 +46,31 @@ def addFolder()->None:
 
 
 def delFolder():
-    key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r'Directory\Background\shell\pyinstaller')
+    key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r'Directory\Background\shell\Pypacker')
     winreg.DeleteKey(key, 'command')
     winreg.CloseKey(key)
     key = key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r'Directory\Background\shell')
-    winreg.DeleteKey(key, 'pyinstaller')
+    winreg.DeleteKey(key, 'Pypacker')
     winreg.CloseKey(key)
 
-    key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r'Directory\shell\pyinstaller')
+    key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r'Directory\shell\Pypacker')
     winreg.DeleteKey(key, 'command')
     winreg.CloseKey(key)
     key = key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r'Directory\shell')
-    winreg.DeleteKey(key, 'pyinstaller')
+    winreg.DeleteKey(key, 'Pypacker')
     winreg.CloseKey(key)
 
 
 def addFile():
     Path = os.path.realpath(sys.argv[0])
-    key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r'*\shell')
-    NewKey = winreg.CreateKey(key, "pyinstaller")
+    key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r'SystemFileAssociations')
+    NewKey = winreg.CreateKey(key, ".py")
     winreg.CloseKey(key)
-    winreg.SetValue(NewKey, '', winreg.REG_SZ, "通过 Py编译者 打开")
-    winreg.SetValueEx(NewKey, 'Icon', 0, winreg.REG_SZ, Path)
+    key = winreg.CreateKey(NewKey, 'shell')
+    winreg.CloseKey(NewKey)
+    NewKey = winreg.CreateKey(key, 'Pypacker')
+    winreg.CloseKey(key)
+    winreg.SetValue(NewKey, '', winreg.REG_SZ, "用 Pypacker 打开")
     newkey = winreg.CreateKey(NewKey, "command")
     winreg.CloseKey(NewKey)
     winreg.SetValue(newkey, '', winreg.REG_SZ, '\"{}\" \"%1\"'.format(Path))
@@ -75,11 +78,17 @@ def addFile():
 
 
 def delFile():
-    key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r'*\shell\pyinstaller')
+    key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r'SystemFileAssociations\.py\shell\Pypacker')
     winreg.DeleteKey(key, 'command')
     winreg.CloseKey(key)
-    key = key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r'*\shell')
-    winreg.DeleteKey(key, 'pyinstaller')
+    key = key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r'SystemFileAssociations\.py\shell')
+    winreg.DeleteKey(key, 'Pypacker')
+    winreg.CloseKey(key)
+    key = key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r'SystemFileAssociations\.py')
+    winreg.DeleteKey(key, 'shell')
+    winreg.CloseKey(key)
+    key = key = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r'SystemFileAssociations')
+    winreg.DeleteKey(key, '.py')
     winreg.CloseKey(key)
 
 
